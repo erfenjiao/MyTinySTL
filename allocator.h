@@ -13,7 +13,7 @@ namespace mystl
     template<class T>
     class allocator
     {
-        public:
+        public: //必要接口
             typedef  T              value_type;
             typedef  T*             pointer;
             typedef  const T*       const_pointer;

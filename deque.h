@@ -273,10 +273,168 @@ namespace mystl
             {
                 fill_init(n , value_type());
             }
+            deque(size_type type , const value_type& value)
+            {
+                fill_init(n , value);
+            }
+            template <class IIter, typename std::enable_if<
+            mystl::is_input_iterator<IIter>::value, int>::type = 0>
+            deque(IIter first, IIter last)
+            { 
+                copy_init(first, last, iterator_category(first)); 
+            }
 
+            deque(std::initializer_list<value_type> ilist)
+            {
+                copy_init(ilist.begin(), ilist.end(), mystl::forward_iterator_tag());
+            }
 
+            deque(const deque& rhs)
+            {
+                copy_init(rhs.begin(), rhs.end(), mystl::forward_iterator_tag());
+            }
+            deque(deque&& rhs) noexcept
+                :begin_(mystl::move(rhs.begin_)),
+                end_(mystl::move(rhs.end_)),
+                map_(rhs.map_),
+                map_size_(rhs.map_size_)
+            {
+                rhs.map_ = nullptr;
+                rhs.map_size_ = 0;
+            }
 
+            deque& operator=(const deque& rhs);
+            deque& operator=(deque&& rhs);
 
+            deque& operator=(std::initializer_list<value_type> ilist)
+            {
+                deque tmp(ilist);
+                swap(tmp);
+                return *this;
+            }
+
+            ~deque()
+            {
+                if (map_ != nullptr)
+                {
+                    clear();
+                    data_allocator::deallocate(*begin_.node, buffer_size);
+                    *begin_.node = nullptr;
+                    map_allocator::deallocate(map_, map_size_);
+                    map_ = nullptr;
+                }
+            }
+        public:
+            iterator begin() noexcept
+            {
+                return begin_;
+            }
+            const_iterator begin() noexcept
+            {
+                return begin_;
+            }
+            iterator end() noexcept
+            {
+                return end_;
+            }
+            const_iterator end() noexcept
+            {
+                return end_;
+            }
+            reverse_iterator rbegin() noexcept
+            {
+                return reverse_iterator(end());
+            }
+            const_reverse_iterator rbegin() noexcept
+            {
+                return const_reverse_iterator(end());
+            }
+            reverse_iterator rend() noexcept
+            {
+                return reverse_iterator(begin());
+            }
+            const_reverse_iterator rend() noexcept
+            {
+                return const_reverse_iterator(begin());
+            }
+
+            const_iterator cbegin() const noexcept
+            {
+                return begin();
+            }
+            const_iterator cend() const noexcept
+            {
+                return end();
+            }
+            const_reverse_iterator crbegin() const noexcept
+            {
+                return rbegin();
+            }
+            const_reverse_iterator crend() const noexcept
+            {
+                return rend();
+            }
+
+            //容量相关操作
+            bool empty() const noexcept
+            {
+                return begin() == end();
+            }
+            size_type size() const noexcept
+            {
+                return end_ - begin_;
+            }
+            size_type max_size() const noexcept
+            {
+                return static_cast<size_type>(-1);
+            }
+            void resize(size_type new_size) 
+            {
+                resize(new_size , value_type());
+            }
+            // 访问元素相关操作 
+            reference       operator[](size_type n)
+            {
+                MYSTL_DEBUG(n < size());
+                return begin_[n];
+            }
+            const_reference operator[](size_type n) const
+            {
+                MYSTL_DEBUG(n < size());
+                return begin_[n];
+            }
+
+            reference       at(size_type n)      
+            { 
+                THROW_OUT_OF_RANGE_IF(!(n < size()), "deque<T>::at() subscript out of range");
+                return (*this)[n];
+            }
+            const_reference at(size_type n) const
+            {
+                THROW_OUT_OF_RANGE_IF(!(n < size()), "deque<T>::at() subscript out of range");
+                return (*this)[n]; 
+            }
+
+            reference       front()
+            {
+                MYSTL_DEBUG(!empty());
+                return *begin();
+            }
+            const_reference front() const
+            {
+                MYSTL_DEBUG(!empty());
+                return *begin();
+            }
+            reference       back()
+            {
+                MYSTL_DEBUG(!empty());
+                return *(end() - 1);
+            }
+            const_reference back() const
+            {
+                MYSTL_DEBUG(!empty());
+                return *(end() - 1);
+            }
     };
 
 } // namespace mystl
