@@ -19,6 +19,13 @@ namespace mystl
             typedef typename Container::size_type  size_type;
             typedef typename Container::reference  reference;
             typedef typename Container::const_reference const_reference;
-            static_assert(std::is_same<T , value_type>::value_type)
+            static_assert(std::is_same<T, value_type>::value,
+                "the value_type of Container should be same with T");
+            
+        private:
+            container_type _c;
+        
+        public:
+        
     }
 }
