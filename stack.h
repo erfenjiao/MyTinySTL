@@ -23,25 +23,9 @@ namespace mystl
                 "the value_type of Container should be same with T");
             
         private:
-            container_type c_;
+            container_type _c;
         
         public:
-            stack() = default;
-            explicit stack(size_type n) : c_(n)
-            {}
-            stack(size_type n , const value_type& value) : c_(n , value)
-            {}
             
-            template<class IIter>
-            stack(IIter first , IIter last) : c_(first , last)
-            {}
-
-            stack(std::initializer_list<T> ilist) : c_(ilist.begin() , ilist.end());
-            {}
-            stack(const Container & c) : c_(c)
-            {}
-            
-
-        
     }
 }

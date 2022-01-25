@@ -245,6 +245,7 @@ namespace mystl
             {
                 fill_assgin(n , value);
             }
+
             template <class Iter , typename std::enable_if
             <mystl::is_input_iterator<Iter>::value , int>::type = 0>
             void assgin(Iter first , Iter last)
@@ -583,8 +584,7 @@ namespace mystl
 
         try_init 函数，若分配失败则忽略，不抛出异常
     */
-
-    template <class T>
+    template<class T>
     void vector<T>::try_init() noexcept
     {
         try
@@ -593,63 +593,111 @@ namespace mystl
             end_ = begin_;
             cap_ = begin_ + 16;
         }
-        catch (...)
+        catch(...)
         {
             begin_ = nullptr;
-            end_ = nullptr;
-            cap_ = nullptr;
+            end_   = nullptr;
+            cap_   = nullptr;
+        }
+        
+    }
+
+
+
+    // // init_space 函数
+    // template <class T>
+    // void vector<T>::init_space(size_type size, size_type cap)
+    // {
+    // try
+    // {
+    //         begin_ = data_allocator::allocate(cap);
+    //         end_ = begin_ + size;
+    //         cap_ = begin_ + cap;
+    // }
+    // catch (...)
+    // {
+    //         begin_ = nullptr;
+    //         end_ = nullptr;
+    //         cap_ = nullptr;
+    //         throw;
+    // }
+    // }
+    //init_space
+    template<class T>
+    void vector<T>::init_space(size_type size , size_type cap)
+    {
+        try
+        {
+            begin_ = data_allocator::allocate(cap);
+            end_   = begin_ + size;
+            cap_   = begin_ + cap;
+        }
+        catch(...)
+        {
+            begin_ = nullptr;
+            end_   = nullptr;
+            cap_   = nullptr;
+            throw;
         }
     }
 
-    // init_space 函数
-    template <class T>
-    void vector<T>::init_space(size_type size, size_type cap)
+    //fill_init
+    template<class T>
+    void vector<T>::fill_init(size_type n , const value_type& value)
     {
-    try
-    {
-            begin_ = data_allocator::allocate(cap);
-            end_ = begin_ + size;
-            cap_ = begin_ + cap;
-    }
-    catch (...)
-    {
-            begin_ = nullptr;
-            end_ = nullptr;
-            cap_ = nullptr;
-            throw;
-    }
+        const size_type init_size = mystl::max(static_cast<size_type>(16) , n);
+        init_space(n , init_size);
     }
 
-    // fill_init 函数
-    template <class T>
-    void vector<T>::
-    fill_init(size_type n, const value_type& value)
-    {
-        const size_type init_size = mystl::max(static_cast<size_type>(16), n);
-        init_space(n, init_size);
-        mystl::uninitialized_fill_n(begin_, n, value);
-    }
+    // // fill_init 函数
+    // template <class T>
+    // void vector<T>::
+    // fill_init(size_type n, const value_type& value)
+    // {
+    //     const size_type init_size = mystl::max(static_cast<size_type>(16), n);
+    //     init_space(n, init_size);
+    //     mystl::uninitialized_fill_n(begin_, n, value);
+    // }
 
     // range_init 函数
-    template <class T>
-    template <class Iter>
-    void vector<T>::
-    range_init(Iter first, Iter last)
+    template<class T>
+    template<class Iter>
+    void vector<T>::range_init(Iter first , Iter last)
     {
-        const size_type init_size = mystl::max(static_cast<size_type>(last - first),
+        const size_type init_size = mystl::max(static_cast<size_type>(last-first),
                                                 static_cast<size_type>(16));
-        init_space(static_cast<size_type>(last - first), init_size);
-        mystl::uninitialized_copy(first, last, begin_);
+        init_space(static_cast<size_type>(last-first),init_size);
+        mystl::uninitialized_copy(first , last , begin_);
+    }
+
+    // range_init
+    // template <class T>
+    // template <class Iter>
+    // void vector<T>::
+    // range_init(Iter first, Iter last)
+    // {
+    //     const size_type init_size = mystl::max(static_cast<size_type>(last - first),
+    //                                             static_cast<size_type>(16));
+    //     init_space(static_cast<size_type>(last - first), init_size);
+    //     mystl::uninitialized_copy(first, last, begin_);
+    // }
+
+    // destroy_and_recover 函数
+    template<class T>
+    void vector<T>::destroy_and_recover(iterator first , iterator last , size_type n)
+    {
+        data_allocator::destroy(first , last);
+        data_allocator::deallocate(first , n);
     }
 
     // destroy_and_recover 函数
-    template <class T>
-    void vector<T>::
-    destroy_and_recover(iterator first, iterator last, size_type n)
-    {
-        data_allocator::destroy(first, last);
-        data_allocator::deallocate(first, n);
-    }
+    // template <class T>
+    // void vector<T>::
+    // destroy_and_recover(iterator first, iterator last, size_type n)
+    // {
+    //     data_allocator::destroy(first, last);
+    //     data_allocator::deallocate(first, n);
+    // }
 
     // get_new_cap 函数
     template <class T>
@@ -673,8 +721,8 @@ namespace mystl
 
     // fill_assign 函数
     template <class T>
-    void vector<T>::
-    fill_assign(size_type n, const value_type& value)
+    void vector<T>:: 
+    fill_assgin(size_type n, const value_type& value)
     {
         if (n > capacity())
         {
@@ -810,10 +858,10 @@ namespace mystl
             auto old_end = end_;
             if (after_elems > n)
             {
-            mystl::uninitialized_copy(end_ - n, end_, end_);
-            end_ += n;
-            mystl::move_backward(pos, old_end - n, old_end);
-            mystl::uninitialized_fill_n(pos, n, value_copy);
+                mystl::uninitialized_copy(end_ - n, end_, end_);
+                end_ += n;
+                mystl::move_backward(pos, old_end - n, old_end);
+                mystl::uninitialized_fill_n(pos, n, value_copy);
             }
             else
             {
@@ -964,10 +1012,7 @@ namespace mystl
         lhs.swap(rhs);
     }
 
-
-
-}  // namespace mystl　
-
+};  // namespace mystl　
 
 
 #endif
