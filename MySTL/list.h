@@ -122,7 +122,8 @@ namespace mytsl
         {
             return &(operator*());
         }
-
+        
+        //??
         self& operator++
         {
             MYSTL_DEBUG(node_ != nullptr);
@@ -437,7 +438,12 @@ namespace mytsl
                 return iterator(link_node);
             }
 
-            //insert
+            /*
+                insert
+                iterator insert(const_iterator pos , const value_type& value)
+                iterator insert(const_iterator pos, size_type n, const value_type& value)
+                iterator insert(const_iterator pos, Iter first, Iter last)
+            */
             iterator insert(const_iterator pos , const value_type& value)
             {
                 THROW_LENGTH_ERROR_IF(size_ > max_size()-1 , "list<T>'s size too big");
@@ -575,9 +581,9 @@ namespace mytsl
             void copy_init(Iter first , Iter last);
             // link / unlink
             iterator  link_iter_node(const_iterator pos, base_ptr node);
-            void      link_nodes(base_ptr p, base_ptr first, base_ptr last);
+            void      link_nodes(base_ptr p , base_ptr first, base_ptr last);
             void      link_nodes_at_front(base_ptr first, base_ptr last);
-            void      link_nodes_at_back(base_ptr first, base_ptr last);
+            void      link_nodes_at_back( base_ptr first, base_ptr last);
             void      unlink_nodes(base_ptr f, base_ptr l);
 
             // assign
@@ -596,113 +602,118 @@ namespace mytsl
     };
 
     //--------------------------------------------------------------------------------------
-    //删除pos 处的元素
+    //删除 pos 处的元素
+    /*
+        iterator erase(const_iterator pos);
+        iterator erase(const_iterator first , const_iterator last);
+        template <class T>
+        typename list<T>::iterator 
+        list<T>::erase(const_iterator pos)
+        {
+            MYSTL_DEBUG(pos != cend());
+            auto n = pos.node_;
+            auto next = n->next;
+            unlink_nodes(n , n);
+            destroy_node(n->as_node());
+            --size_;
+            return iterator(next);
+        }
+    */
 
-    template <class T>
-    typename list<T>::iterator 
-    list<T>::erase(const_iterator pos)
-    {
-        MYSTL_DEBUG(pos != cend());
-        auto n = pos.node_;
-        auto next = n->next;
-        unlink_nodes(n , n);
-        destroy_node(n->as_node());
-        --size_;
-        return iterator(next);
-    }
+    
 
     // 删除 [first, last) 内的元素
     template <class T>
     typename list<T>::iterator 
     list<T>::erase(const_iterator first, const_iterator last)
     {
-    if (first != last)
-    {
-        unlink_nodes(first.node_, last.node_->prev);
-        while (first != last)
+        if (first != last)
         {
-        auto cur = first.node_;
-        ++first;
-        destroy_node(cur->as_node());
-        --size_;
+            unlink_nodes(first.node_, last.node_->prev);
+            while (first != last)
+            {
+                auto cur = first.node_;
+                ++first;
+                destroy_node(cur->as_node());
+                --size_;
+            }
         }
-    }
-    return iterator(last.node_);
+        return iterator(last.node_);
     }
 
     // 清空 list
     template <class T>
     void list<T>::clear()
     {
-    if (size_ != 0)
-    {
-        auto cur = node_->next;
-        for (base_ptr next = cur->next; cur != node_; cur = next, next = cur->next)
+        if (size_ != 0)
         {
-        destroy_node(cur->as_node());
+            auto cur = node_->next;
+            for (base_ptr next = cur->next; cur != node_; cur = next, next = cur->next)
+            {
+                destroy_node(cur->as_node());
+            }
+            node_->unlink();
+            size_ = 0;
         }
-        node_->unlink();
-        size_ = 0;
-    }
     }
 
     // 重置容器大小
     template <class T>
     void list<T>::resize(size_type new_size, const value_type& value)
     {
-    auto i = begin();
-    size_type len = 0;
-    while (i != end() && len < new_size)
-    {
-        ++i;
-        ++len;
-    }
-    if (len == new_size)
-    {
-        erase(i, node_);
-    }
-    else
-    {
-        insert(node_, new_size - len, value);
-    }
+        auto i = begin();
+        size_type len = 0;
+        while (i != end() && len < new_size)
+        {
+            ++i;
+            ++len;
+        }
+        if (len == new_size)
+        {
+            erase(i, node_);
+        }
+        else
+        {
+            insert(node_, new_size - len, value);
+        }
     }
 
     // 将 list x 接合于 pos 之前
     template <class T>
     void list<T>::splice(const_iterator pos, list& x)
     {
-    MYSTL_DEBUG(this != &x);
-    if (!x.empty())
-    {
-        THROW_LENGTH_ERROR_IF(size_ > max_size() - x.size_, "list<T>'s size too big");
+        MYSTL_DEBUG(this != &x);
+        if (!x.empty())
+        {
+            THROW_LENGTH_ERROR_IF(size_ > max_size() - x.size_, "list<T>'s size too big");
 
-        auto f = x.node_->next;
-        auto l = x.node_->prev;
+            auto f = x.node_->next;
+            auto l = x.node_->prev;
 
-        x.unlink_nodes(f, l);
-        link_nodes(pos.node_, f, l);
+            x.unlink_nodes(f, l);
+            link_nodes(pos.node_, f, l);
 
-        size_ += x.size_;
-        x.size_ = 0;
-    }
+            size_ += x.size_;
+            x.size_ = 0;
+        }
     }
 
     // 将 it 所指的节点接合于 pos 之前
     template <class T>
     void list<T>::splice(const_iterator pos, list& x, const_iterator it)
     {
-    if (pos.node_ != it.node_ && pos.node_ != it.node_->next)
-    {
-        THROW_LENGTH_ERROR_IF(size_ > max_size() - 1, "list<T>'s size too big");
+        if (pos.node_ != it.node_ && pos.node_ != it.node_->next)
+        {
+            THROW_LENGTH_ERROR_IF(size_ > max_size() - 1, "list<T>'s size too big");
 
-        auto f = it.node_;
+            auto f = it.node_;
 
-        x.unlink_nodes(f, f);
-        link_nodes(pos.node_, f, f);
+            x.unlink_nodes(f, f);
+            link_nodes(pos.node_, f, f);
 
-        ++size_;
-        --x.size_;
-    }
+            ++size_;
+            --x.size_;
+        }
     }
 
     // 将 list x 的 [first, last) 内的节点接合于 pos 之前
@@ -754,11 +765,11 @@ namespace mytsl
     {
         if (pred(*i, *j))
         {
-        erase(j);
+            erase(j);
         }
         else
         {
-        i = j;
+            i = j;
         }
         j = i;
         ++j;
@@ -781,34 +792,34 @@ namespace mytsl
 
         while (f1 != l1 && f2 != l2)
         {
-        if (comp(*f2, *f1))
-        {
-            // 使 comp 为 true 的一段区间
-            auto next = f2;
-            ++next;
-            for (; next != l2 && comp(*next, *f1); ++next)
-            ;
-            auto f = f2.node_;
-            auto l = next.node_->prev;
-            f2 = next;
+            if (comp(*f2, *f1))
+            {
+                // 使 comp 为 true 的一段区间
+                auto next = f2;
+                ++next;
+                for (; next != l2 && comp(*next, *f1); ++next)
+                ;
+                auto f = f2.node_;
+                auto l = next.node_->prev;
+                f2 = next;
 
-            // link node
-            x.unlink_nodes(f, l);
-            link_nodes(f1.node_, f, l);
-            ++f1;
-        }
-        else
-        {
-            ++f1;
-        }
+                // link node
+                x.unlink_nodes(f, l);
+                link_nodes(f1.node_, f, l);
+                ++f1;
+            }
+            else
+            {
+                ++f1;
+            }
         }
         // 连接剩余部分
         if (f2 != l2)
         {
-        auto f = f2.node_;
-        auto l = l2.node_->prev;
-        x.unlink_nodes(f, l);
-        link_nodes(l1.node_, f, l);
+            auto f = f2.node_;
+            auto l = l2.node_->prev;
+            x.unlink_nodes(f, l);
+            link_nodes(l1.node_, f, l);
         }
 
         size_ += x.size_;
@@ -817,22 +828,26 @@ namespace mytsl
     }
 
     // 将 list 反转
-    template <class T>
-    void list<T>::reverse()
-    {
-    if (size_ <= 1)
-    {
-        return;
-    }
-    auto i = begin();
-    auto e = end();
-    while (i.node_ != e.node_)
-    {
-        mystl::swap(i.node_->prev, i.node_->next);
-        i.node_ = i.node_->prev;
-    }
-    mystl::swap(e.node_->prev, e.node_->next);
-    }
+    /*
+        iterator erase(const_iterator pos);
+            iterator erase(const_iterator first , const_iterator last);
+    */
+    // template <class T>
+    // void list<T>::reverse()
+    // {
+    // if (size_ <= 1)
+    // {
+    //     return;
+    // }
+    // auto i = begin();
+    // auto e = end();
+    // while (i.node_ != e.node_)
+    // {
+    //     mystl::swap(i.node_->prev, i.node_->next);
+    //     i.node_ = i.node_->prev;
+    // }
+    // mystl::swap(e.node_->prev, e.node_->next);
+    // }
 
     // 创建结点
     template <class T>
@@ -1102,88 +1117,88 @@ namespace mytsl
     typename list<T>::iterator 
     list<T>::list_sort(iterator f1, iterator l2, size_type n, Compared comp)
     {
-    if (n < 2)
-        return f1;
+        if (n < 2)
+            return f1;
 
-    if (n == 2)
-    {
-        if (comp(*--l2, *f1))
+        if (n == 2)
         {
-        auto ln = l2.node_;
-        unlink_nodes(ln, ln);
-        link_nodes(f1.node_, ln, ln);
-        return l2;
+            if (comp(*--l2, *f1))
+            {
+                auto ln = l2.node_;
+                unlink_nodes(ln, ln);
+                link_nodes(f1.node_, ln, ln);
+                return l2;
+            }
+            return f1;
         }
-        return f1;
-    }
 
-    auto n2 = n / 2;
-    auto l1 = f1;
-    mystl::advance(l1, n2);
-    auto result = f1 = list_sort(f1, l1, n2, comp);  // 前半段的最小位置
-    auto f2 = l1 = list_sort(l1, l2, n - n2, comp);  // 后半段的最小位置
+        auto n2 = n / 2;
+        auto l1 = f1;
+        mystl::advance(l1, n2);
+        auto result = f1 = list_sort(f1, l1, n2, comp);  // 前半段的最小位置
+        auto f2 = l1 = list_sort(l1, l2, n - n2, comp);  // 后半段的最小位置
 
-    // 把较小的一段区间移到前面
-    if (comp(*f2, *f1))
-    {
-        auto m = f2;
-        ++m;
-        for (; m != l2 && comp(*m, *f1); ++m)
-        ;
-        auto f = f2.node_;
-        auto l = m.node_->prev;
-        result = f2;
-        l1 = f2 = m;
-        unlink_nodes(f, l);
-        m = f1;
-        ++m;
-        link_nodes(f1.node_, f, l);
-        f1 = m;
-    }
-    else
-    {
-        ++f1;
-    }
-
-    // 合并两段有序区间
-    while (f1 != l1 && f2 != l2)
-    {
+        // 把较小的一段区间移到前面
         if (comp(*f2, *f1))
         {
-        auto m = f2;
-        ++m;
-        for (; m != l2 && comp(*m, *f1); ++m)
+            auto m = f2;
+            ++m;
+            for (; m != l2 && comp(*m, *f1); ++m)
             ;
-        auto f = f2.node_;
-        auto l = m.node_->prev;
-        if (l1 == f2)
-            l1 = m;
-        f2 = m;
-        unlink_nodes(f, l);
-        m = f1;
-        ++m;
-        link_nodes(f1.node_, f, l);
-        f1 = m;
+            auto f = f2.node_;
+            auto l = m.node_->prev;
+            result = f2;
+            l1 = f2 = m;
+            unlink_nodes(f, l);
+            m = f1;
+            ++m;
+            link_nodes(f1.node_, f, l);
+            f1 = m;
         }
         else
         {
-        ++f1;
+            ++f1;
         }
-    }
-    return result;
+
+        // 合并两段有序区间
+        while (f1 != l1 && f2 != l2)
+        {
+            if (comp(*f2, *f1))
+            {
+                auto m = f2;
+                ++m;
+                for (; m != l2 && comp(*m, *f1); ++m)
+                    ;
+                auto f = f2.node_;
+                auto l = m.node_->prev;
+                if (l1 == f2)
+                    l1 = m;
+                f2 = m;
+                unlink_nodes(f, l);
+                m = f1;
+                ++m;
+                link_nodes(f1.node_, f, l);
+                f1 = m;
+            }
+            else
+            {
+                ++f1;
+            }
+        }
+        return result;
     }
 
     // 重载比较操作符
     template <class T>
     bool operator==(const list<T>& lhs, const list<T>& rhs)
     {
-    auto f1 = lhs.cbegin();
-    auto f2 = rhs.cbegin();
-    auto l1 = lhs.cend();
-    auto l2 = rhs.cend();
-    for (; f1 != l1 && f2 != l2 && *f1 == *f2; ++f1, ++f2)
-        ;
-    return f1 == l1 && f2 == l2;
+        auto f1 = lhs.cbegin();
+        auto f2 = rhs.cbegin();
+        auto l1 = lhs.cend();
+        auto l2 = rhs.cend();
+        for (; f1 != l1 && f2 != l2 && *f1 == *f2; ++f1, ++f2)
+            ;
+        return f1 == l1 && f2 == l2;
     }
 
     template <class T>

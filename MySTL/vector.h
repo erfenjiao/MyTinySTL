@@ -346,7 +346,7 @@ namespace mystl
             void copy_assgin(FIter first , FIter last , forward_iterator_tag);
 
             //reallocate
-            template<class.. Args>
+            template<class ...Args>
             void reallocate_emplace(iterator pos , Args&&... args);
             void reallocate_insert(iterator pos , const value_type& value);
 
@@ -557,11 +557,11 @@ namespace mystl
     template <class T>
     void vector<T>::resize(size_type new_size, const value_type& value)
     {
-        if (new_size < size())
+        if (new_size < size()) // 比原有的小，删除一节
         {
             erase(begin() + new_size, end());
         }
-        else
+        else                   //大，补充
         {
             insert(end(), new_size - size(), value);
         }
@@ -700,18 +700,21 @@ namespace mystl
     // }
 
     // get_new_cap 函数
-    template <class T>
-    typename vector<T>::size_type 
-    vector<T>::
-    get_new_cap(size_type add_size)
+    /*  size_type capacity() const noexcept{ 
+            return static_cast<size_type>(cap_ - begin_); 
+        }
+     */
+    template<class T>
+    typename vector<T>::size_type vector<T>::get_new_cap(size_type add_size)
     {
         const auto old_size = capacity();
         THROW_LENGTH_ERROR_IF(old_size > max_size() - add_size,
                                 "vector<T>'s size too big");
-        if (old_size > max_size() - old_size / 2)
+        if(old_size > max_size() - old_size/2)
         {
-            return old_size + add_size > max_size() - 16
-            ? old_size + add_size : old_size + add_size + 16;
+            return old_size + add_size > max_size() - 16;
+                   ? old_size + add_size
+                   : old_size + add_size+16;
         }
         const size_type new_size = old_size == 0
             ? mystl::max(add_size, static_cast<size_type>(16))
@@ -719,32 +722,70 @@ namespace mystl
         return new_size;
     }
 
+
+    // template <class T>
+    // typename vector<T>::size_type 
+    // vector<T>::
+    // get_new_cap(size_type add_size)
+    // {
+    //     const auto old_size = capacity();
+    //     THROW_LENGTH_ERROR_IF(old_size > max_size() - add_size,
+    //                             "vector<T>'s size too big");
+    //     if (old_size > max_size() - old_size / 2)
+    //     {
+    //         return old_size + add_size > max_size() - 16
+    //         ? old_size + add_size : old_size + add_size + 16;
+    //     }
+    //     const size_type new_size = old_size == 0
+    //         ? mystl::max(add_size, static_cast<size_type>(16))
+    //         : mystl::max(old_size + old_size / 2, old_size + add_size);
+    //     return new_size;
+    // }
+
     // fill_assign 函数
     template <class T>
-    void vector<T>:: 
-    fill_assgin(size_type n, const value_type& value)
+    void vector<T>::fill_assgin(size_type n, const value_type& value)
     {
-        if (n > capacity())
+        if(n > capacity())
         {
-            vector tmp(n, value);
+            vector tmp(n , value);
             swap(tmp);
         }
-        else if (n > size())
+        else if(n > size())
         {
-            mystl::fill(begin(), end(), value);
-            end_ = mystl::uninitialized_fill_n(end_, n - size(), value);
+            mystl::fill(begin() , end() , value);
+            end_ = mystl::uninitialized_fill_n(end_ , n - size() , value);
         }
         else
         {
-            erase(mystl::fill_n(begin_, n, value), end_);
+            erase(mystl::fill_n(begin_ , n , value) , end_);
         }
     }
+
+    // template <class T>
+    // void vector<T>:: 
+    // fill_assgin(size_type n, const value_type& value)
+    // {
+    //     if (n > capacity())
+    //     {
+    //         vector tmp(n, value);
+    //         swap(tmp);
+    //     }
+    //     else if (n > size())
+    //     {
+    //         mystl::fill(begin(), end(), value);
+    //         end_ = mystl::uninitialized_fill_n(end_, n - size(), value);
+    //     }
+    //     else
+    //     {
+    //         erase(mystl::fill_n(begin_, n, value), end_);
+    //     }
+    // }
 
     // copy_assign 函数
     template <class T>
     template <class IIter>
-    void vector<T>::
-    copy_assign(IIter first, IIter last, input_iterator_tag)
+    void vector<T>::copy_assgin(IIter first, IIter last, input_iterator_tag)
     {
         auto cur = begin_;
         for (; first != last && cur != end_; ++first, ++cur)
@@ -754,6 +795,7 @@ namespace mystl
         if (first == last)
         {
             erase(cur, end_);
+            //// 删除[first, last)上的元素
         }
         else
         {
@@ -765,7 +807,7 @@ namespace mystl
     template <class T>
     template <class FIter>
     void vector<T>::
-    copy_assign(FIter first, FIter last, forward_iterator_tag)
+    copy_assgin(FIter first, FIter last, forward_iterator_tag)
     {
         const size_type len = mystl::distance(first, last);
         if (len > capacity())
@@ -814,7 +856,34 @@ namespace mystl
         begin_ = new_begin;
         end_ = new_end;
         cap_ = new_begin + new_size;
-        }
+    }
+
+
+    // // 重新分配空间并在 pos 处就地构造元素
+    // template <class T>
+    // template <class ...Args>
+    // void vector<T>::reallocate_emplace(iterator pos, Args&& ...args)
+    // {
+    //     const auto new_size = get_new_cap(1);
+    //     auto new_begin = data_allocator::allocate(new_size);
+    //     auto new_end = new_begin;
+    //     try
+    //     {
+    //         new_end = mystl::uninitialized_move(begin_, pos, new_begin);
+    //         data_allocator::construct(mystl::address_of(*new_end), mystl::forward<Args>(args)...);
+    //         ++new_end;
+    //         new_end = mystl::uninitialized_move(pos, end_, new_end);
+    //     }
+    //     catch (...)
+    //     {
+    //         data_allocator::deallocate(new_begin, new_size);
+    //         throw;
+    //     }
+    //     destroy_and_recover(begin_, end_, cap_ - begin_);
+    //     begin_ = new_begin;
+    //     end_ = new_end;
+    //     cap_ = new_begin + new_size;
+    // }
 
     // 重新分配空间并在 pos 处插入元素
     template <class T>
