@@ -275,8 +275,464 @@ namespace mystl
                                    forward_iterator_tag , forward_iterator_tag)
     {
         if(first2 == last2)
-            return 
+            return last1;
+        else
+        {
+            auto result1 = last1;
+            while(true)
+            {
+                // 利用 search 查找某个子序列的首次出现点，找不到则返回 last1
+                auto new_result = mystl::search(first1 , last1 , first2 , last2);
+                if(new_result == last1)
+                {
+                    return result;
+                }
+                else
+                {
+                    result = new_result;
+                    first1 = new_result;
+                    ++first1;
+                }
+            }
+        }
     }
+
+    // find_end_dispatch 的 bidirectional_iterator_tag 版本
+    template <class BidirectionalIter1, class BidirectionalIter2>
+    BidirectionalIter1
+    find_end_dispatch(BidirectionalIter1 first1, BidirectionalIter1 last1,
+                    BidirectionalIter2 first2, BidirectionalIter2 last2,
+                    bidirectional_iterator_tag, bidirectional_iterator_tag)
+    {
+        typedef reverse_iterator<BidirectionalIter1> reviter1;
+        typedef reverse_iterator<BidirectionalIter2> reviter2;
+        reviter1 rlast1(first1);
+        reviter2 rlast2(first2);
+        reviter1 rresult = mystl::search(reviter1(last1), rlast1, reviter2(last2), rlast2);
+        if (rresult == rlast1)
+        {
+            return last1;
+        }
+        else
+        {
+            auto result = rresult.base();
+            mystl::advance(result, -mystl::distance(first2, last2));
+            return result;
+        }
+    }
+
+    template <class ForwardIter1, class ForwardIter2>
+    ForwardIter1
+    find_end(ForwardIter1 first1, ForwardIter1 last1,
+            ForwardIter2 first2, ForwardIter2 last2)
+    {
+        typedef typename iterator_traits<ForwardIter1>::iterator_category Category1;
+        typedef typename iterator_traits<ForwardIter2>::iterator_category Category2;
+        return mystl::find_end_dispatch(first1, last1, first2, last2, Category1(), Category2());
+    }
+
+    // 重载版本使用函数对象 comp 代替比较操作
+    // find_end_dispatch 的 forward_iterator_tag 版本
+    template <class ForwardIter1, class ForwardIter2, class Compared>
+    ForwardIter1
+    find_end_dispatch(ForwardIter1 first1, ForwardIter1 last1,
+                    ForwardIter2 first2, ForwardIter2 last2,
+                    forward_iterator_tag, forward_iterator_tag, Compared comp)
+    {
+        if (first2 == last2)
+        {
+            return last1;
+        }
+        else
+        {
+            auto result = last1;
+            while (true)
+            {
+                // 利用 search 查找某个子序列的首次出现点，找不到则返回 last1
+                auto new_result = mystl::search(first1, last1, first2, last2, comp);
+                if (new_result == last1)
+                {
+                    return result;
+                }
+                else
+                {
+                    result = new_result;
+                    first1 = new_result;
+                    ++first1;
+                }
+            }
+        }
+    }
+
+    // find_end_dispatch 的 bidirectional_iterator_tag 版本
+    template <class BidirectionalIter1, class BidirectionalIter2, class Compared>
+    BidirectionalIter1
+    find_end_dispatch(BidirectionalIter1 first1, BidirectionalIter1 last1,
+                    BidirectionalIter2 first2, BidirectionalIter2 last2,
+                    bidirectional_iterator_tag, bidirectional_iterator_tag, Compared comp)
+    {
+        typedef reverse_iterator<BidirectionalIter1> reviter1;
+        typedef reverse_iterator<BidirectionalIter2> reviter2;
+        reviter1 rlast1(first1);
+        reviter2 rlast2(first2);
+        reviter1 rresult = mystl::search(reviter1(last1), rlast1, reviter2(last2), rlast2, comp);
+        if (rresult == rlast1)
+        {
+            return last1;
+        }
+        else
+        {
+            auto result = rresult.base();
+            mystl::advance(result, -mystl::distance(first2, last2));
+            return result;
+        }
+    }
+
+    template <class ForwardIter1, class ForwardIter2, class Compared>
+    ForwardIter1
+    find_end(ForwardIter1 first1, ForwardIter1 last1,
+            ForwardIter2 first2, ForwardIter2 last2, Compared comp)
+    {
+        typedef typename iterator_traits<ForwardIter1>::iterator_category Category1;
+        typedef typename iterator_traits<ForwardIter2>::iterator_category Category2;
+        return mystl::find_end_dispatch(first1, last1, first2, last2, Category1(), Category2(), comp);
+    }
+
+    /*
+        find_first_of
+        在[first1, last1)中查找[first2, last2)中的某些元素，返回指向第一次出现的元素的迭代器
+    */
+    template<class InputIter , class ForwardIter>
+    InputIter find_first_of(InputIter first1 , InputIter last1,
+                           ForwardIter first2 , ForwardIter last2)
+    {
+        for (; first1 != last1; ++first1)
+        {
+            for (auto iter = first2; iter != last2; ++iter)
+            {
+                if (*first1 == *iter)
+                    return first1;
+            }
+        }
+        return last1;
+    }
+
+    // 重载版本使用函数对象 comp 代替比较操作
+    template <class InputIter, class ForwardIter, class Compared>
+    InputIter
+    find_first_of(InputIter first1, InputIter last1,
+                ForwardIter first2, ForwardIter last2, Compared comp)
+    {
+        for (; first1 != last1; ++first1)
+        {
+            for (auto iter = first2; iter != last2; ++iter)
+            {
+                if (comp(*first1, *iter))
+                    return first1;
+            }
+        }
+        return last1;
+    }
+
+    /*
+        find_each
+        使用一个函数对象 f 对[first, last)区间内的每个元素执行一个 operator() 操作，但不能改变元素内容
+    */
+    template <class InputIter, class Function>
+    Function for_each(InputIter first, InputIter last, Function f)
+    {
+        for( ; first != last ; first++)
+        {
+            f(*first)
+        }
+        return f;
+    }
+
+    /*****************************************************************************************/
+    // adjacent_find
+    // 找出第一对匹配的相邻元素，缺省使用 operator== 比较，如果找到返回一个迭代器，指向这对元素的第一个元素
+    /*****************************************************************************************/
+    template<class ForwardedIter>
+    ForwardedIter adiacent_find(ForwardedIter first , ForwardedIter last)
+    {
+        if(first == last)
+            return last;
+        auto next = first;
+        while(++next != last)
+        {
+            if(*first == *next)
+                return first;
+        }
+        return last;
+    }
+
+    // 重载版本使用函数对象 comp 代替比较操作
+    template<class ForwardedIter , class Compared>
+    ForwardedIter adiacent_find(ForwardedIter first , ForwardedIter last , Compared comp)
+    {
+        if(first == last)
+            return last;
+        auto next = first;
+        while(++next != last)
+        {
+            if(comp(*first == *next))
+                return first;
+            first = next;
+        }
+        return last;
+    }
+    /*****************************************************************************************/
+    // lower_bound
+    // 在[first, last)中查找第一个不小于 value 的元素，并返回指向它的迭代器，若没有则返回 last
+    /*****************************************************************************************/
+    template<class ForwardedIter , class T>
+    ForwardedIter lower_bound(ForwardedIter first , ForwardedIter last , const T& value , forward_iterator_tag)
+    {
+        auto len = mystl::distance(first , last);
+        auto half = len;
+        ForwardedIter middle;
+        while(len > 0)
+        {
+            half = len >> 1;
+            middle = first;
+            mystl::advance(middle , half);
+            if(*middle < value)
+            {
+                first = middle;
+                first++;
+                len = len - half - 1;
+            }
+            else
+            {
+                len = half;
+            }
+        }
+        return half;
+    }
+
+    // lbound_dispatch 的 random_access_iterator_tag 版本
+    template <class RandomIter, class T>
+    RandomIter
+    lbound_dispatch(RandomIter first, RandomIter last,
+                    const T& value, random_access_iterator_tag)
+    {
+        auto len = last - first;
+        auto half = len;
+        RandomIter middle;
+        while (len > 0)
+        {
+            half = len >> 1;
+            middle = first + half;
+            if (*middle < value)
+            {
+                first = middle + 1;
+                len = len - half - 1;
+            }
+            else
+            {
+                len = half;
+            }
+        }
+        return first;
+    }
+
+    template <class ForwardIter, class T>
+    ForwardIter
+    lower_bound(ForwardIter first, ForwardIter last, const T& value)
+    {
+        return mystl::lbound_dispatch(first, last, value, iterator_category(first));
+    }
+
+    // 重载版本使用函数对象 comp 代替比较操作
+    // lbound_dispatch 的 forward_iterator_tag 版本
+    template <class ForwardIter, class T, class Compared>
+    ForwardIter
+    lbound_dispatch(ForwardIter first, ForwardIter last,
+                    const T& value, forward_iterator_tag, Compared comp)
+    {
+        auto len = mystl::distance(first, last);
+        auto half = len;
+        ForwardIter middle;
+        while (len > 0)
+        {
+            half = len >> 1;
+            middle = first;
+            mystl::advance(middle, half);
+            if (comp(*middle, value))
+            {
+                first = middle;
+                ++first;
+                len = len - half - 1;
+            }
+            else
+            {
+                len = half;
+            }
+        }
+        return first;
+    }
+
+    // lbound_dispatch 的 random_access_iterator_tag 版本
+    template <class RandomIter, class T, class Compared>
+    RandomIter
+    lbound_dispatch(RandomIter first, RandomIter last,
+                    const T& value, random_access_iterator_tag, Compared comp)
+    {
+        auto len = last - first;
+        auto half = len;
+        RandomIter middle;
+        while (len > 0)
+        {
+            half = len >> 1;
+            middle = first + half;
+            if (comp(*middle, value))
+            {
+                first = middle + 1;
+                len = len - half - 1;
+            }
+            else
+            {
+                len = half;
+            }
+        }
+        return first;
+    }
+
+    template <class ForwardIter, class T, class Compared>
+    ForwardIter
+    lower_bound(ForwardIter first, ForwardIter last, const T& value, Compared comp)
+    {
+        return mystl::lbound_dispatch(first, last, value, iterator_category(first), comp);
+    }
+
+    /*****************************************************************************************/
+    // upper_bound
+    // 在[first, last)中查找第一个大于value 的元素，并返回指向它的迭代器，若没有则返回 last
+    /*****************************************************************************************/
+    // ubound_dispatch 的 forward_iterator_tag 版本
+    template <class ForwardIter, class T>
+    ForwardIter
+    ubound_dispatch(ForwardIter first, ForwardIter last,
+                    const T& value, forward_iterator_tag)
+    {
+        auto len = mystl::distance(first, last);
+        auto half = len;
+        ForwardIter middle;
+        while (len > 0)
+        {
+            half = len >> 1;
+            middle = first;
+            mystl::advance(middle, half);
+            if (value < *middle)
+            {
+                len = half;
+            }
+            else
+            {
+                first = middle;
+                ++first;
+                len = len - half - 1;
+            }
+        }
+        return first;
+    }
+
+    // ubound_dispatch 的 random_access_iterator_tag 版本
+    template <class RandomIter, class T>
+    RandomIter
+    ubound_dispatch(RandomIter first, RandomIter last,
+                    const T& value, random_access_iterator_tag)
+    {
+        auto len = last - first;
+        auto half = len;
+        RandomIter middle;
+        while (len > 0)
+        {
+            half = len >> 1;
+            middle = first + half;
+            if (value < *middle)
+            {
+                len = half;
+            }
+            else
+            {
+                first = middle + 1;
+                len = len - half - 1;
+            }
+        }
+        return first;
+    }
+
+    template <class ForwardIter, class T>
+    ForwardIter
+    upper_bound(ForwardIter first, ForwardIter last, const T& value)
+    {
+        return mystl::ubound_dispatch(first, last, value, iterator_category(first));
+    }
+
+    // 重载版本使用函数对象 comp 代替比较操作
+    // ubound_dispatch 的 forward_iterator_tag 版本
+    template <class ForwardIter, class T, class Compared>
+    ForwardIter
+    ubound_dispatch(ForwardIter first, ForwardIter last,
+                    const T& value, forward_iterator_tag, Compared comp)
+    {
+        auto len = mystl::distance(first, last);
+        auto half = len;
+        ForwardIter middle;
+        while (len > 0)
+        {
+            half = len >> 1;
+            middle = first;
+            mystl::advance(middle, half);
+            if (comp(value, *middle))
+            {
+                len = half;
+            }
+            else
+            {
+                first = middle;
+                ++first;
+                len = len - half - 1;
+            }
+        }
+        return first;
+    }
+
+    // ubound_dispatch 的 random_access_iterator_tag 版本
+    template <class RandomIter, class T, class Compared>
+    RandomIter
+    ubound_dispatch(RandomIter first, RandomIter last,
+                    const T& value, random_access_iterator_tag, Compared comp)
+    {
+        auto len = last - first;
+        auto half = len;
+        RandomIter middle;
+        while (len > 0)
+        {
+            half = len >> 1;
+            middle = first + half;
+            if (comp(value, *middle))
+            {
+                len = half;
+            }
+            else
+            {
+                first = middle + 1;
+                len = len - half - 1;
+            }
+        }
+        return first;
+    }
+
+    template <class ForwardIter, class T, class Compared>
+    ForwardIter
+    upper_bound(ForwardIter first, ForwardIter last, const T& value, Compared comp)
+    {
+        return mystl::ubound_dispatch(first, last, value, iterator_category(first), comp);
+    }
+
+
 }
 
 #endif
