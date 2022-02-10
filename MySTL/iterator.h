@@ -36,11 +36,18 @@ namespace mystl
     struct has_iterator_cat
     {
         private:
-            struct two{char a , char b};
-            template <class U> static two test(...);
-            template <class U> static char test(typedef U::iterator_category* = 0);
+            struct two
+            {
+                char a;
+                char b;
+            };
+            template <class U> 
+            static two test(...);
+
+            template <class U> 
+            static char test(typename U::iterator_category* = 0);
         public:
-            static const bool value = sizeof(test<T>(0)) == sizrof(char);
+            static const bool value = sizeof(test<T>(0)) == sizeof(char);
     };
 
     template <class Iterator , bool>

@@ -51,7 +51,7 @@ namespace mystl
         catch (...)
         {
             for (; result != cur; --cur)
-                mystl::destroy(&*cur);
+                mystl::destory(&*cur);
         }
         return cur;
     }
@@ -72,7 +72,8 @@ namespace mystl
     ForwardIter 
     unchecked_uninit_copy_n(InputIter first, Size n, ForwardIter result, std::true_type)
     {
-        return mystl::copy_n(first, n, result).second;
+        return mystl::copy_n(first , n , result);
+        //return mystl::copy_n(first, n, result);
     }
 
     template <class InputIter, class Size, class ForwardIter>
@@ -90,7 +91,7 @@ namespace mystl
         catch (...)
         {
             for (; result != cur; --cur)
-                mystl::destroy(&*cur);
+                mystl::destory(&*cur);
         }
         return cur;
     }
@@ -116,7 +117,8 @@ namespace mystl
     void uninitialized_fill(ForwardIterator first , ForwardIterator last , const T&value ,
      std::true_type)
     {
-        mystl(first , last , value);
+        //error:mystl(first , last , value);
+        mystl::fill(first , last , value);
     }
 
     template<class ForwardIterator , class T>
@@ -126,7 +128,7 @@ namespace mystl
         auto cur = first;
         try
         {
-            for(:cur != last ; cur++)
+            for( ; cur != last ; cur++)
             {
                 mystl::construct(&*cur , value);
             }
@@ -135,7 +137,7 @@ namespace mystl
         {
             for( ; cur!= last ; cur++)
             {
-                mystl::destroy(&*first);
+                mystl::destory(&*first);
             }
         }
     }
@@ -260,7 +262,7 @@ namespace mystl
         catch (...)
         {
             for (; result != cur; ++result)
-                mystl::destroy(&*result);
+                mystl::destory(&*result);
             throw;
         }
         return cur;

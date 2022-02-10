@@ -35,8 +35,8 @@ namespace mystl
             template <class... Args>
             static void construct(T* ptr, Args&& ...args);
 
-            static void destroy(T* ptr);
-            static void destroy(T* first, T* last);
+            static void destory(T* ptr);
+            static void destory(T* first, T* last);
     };
     //配置空间
     template<class T>
@@ -95,14 +95,14 @@ namespace mystl
     }
 
     template<class T>
-    void allocator<T>::destroy(T* ptr)
+    void allocator<T>::destory(T* ptr)
     {
-        mystl::destroy(ptr);
+        mystl::destory(ptr);
     }
     template <class T>
-    void allocator<T>::destroy(T* first, T* last)
+    void allocator<T>::destory(T* first, T* last)
     {
-        mystl::destroy(first, last);
+        mystl::destory(first, last);
     }
 
 

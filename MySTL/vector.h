@@ -915,7 +915,7 @@ namespace mystl
     template <class T>
     typename vector<T>::iterator 
     vector<T>::
-    fill_insert(iterator pos, size_type n, const value_type& value)
+    fill_insert(iterator pos , size_type n , const value_type& value)
     {
         if (n == 0)
             return pos;
@@ -940,7 +940,8 @@ namespace mystl
             }
         }
         else
-        { // 如果备用空间不足
+        { 
+            // 如果备用空间不足
             const auto new_size = get_new_cap(n);
             auto new_begin = data_allocator::allocate(new_size);
             auto new_end = new_begin;
@@ -966,8 +967,7 @@ namespace mystl
     // copy_insert 函数
     template <class T>
     template <class IIter>
-    void vector<T>::
-    copy_insert(iterator pos, IIter first, IIter last)
+    void vector<T>::copy_insert(iterator pos, IIter first, IIter last)
     {
         if (first == last)
             return;
