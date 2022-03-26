@@ -138,67 +138,67 @@ inline const std::streambuf*& get_cerrbuf()
 
 inline const std::streambuf*& get_clogbuf()
 {
-    static const std::streambuf* plog = std::clog.rdbuf();
-    return plog;
+  static const std::streambuf* plog = std::clog.rdbuf();
+  return plog;
 }
 
 // Gets an unique integer to use as index to iword()
 inline int get_iword()
 {
-    static int i = std::ios_base::xalloc();
-    return i;
+  static int i = std::ios_base::xalloc();
+  return i;
 }
 
 // Determines whether the terminal color of this system can be modified.
 inline bool is_modifiable()
 {
-    #if defined(REDBUD_LINUX) || defined(REDBUD_OSX)
-    static constexpr const char* terms[] = {
-        "ansi", "color", "console", "cygwin", "gnome", "konsole", "kterm",
-        "linux", "msys", "putty", "rxvt", "screen", "vt100", "xterm"
-    };
-    const char *penv = std::getenv("TERM");
-    if (penv == nullptr)
+#if defined(REDBUD_LINUX) || defined(REDBUD_OSX)
+  static constexpr const char* terms[] = {
+    "ansi", "color", "console", "cygwin", "gnome", "konsole", "kterm",
+    "linux", "msys", "putty", "rxvt", "screen", "vt100", "xterm"
+  };
+  const char *penv = std::getenv("TERM");
+  if (penv == nullptr)
+  {
+    return false;
+  }
+  bool result = false;
+  for (const auto& t : terms)
+  {
+    if (std::strstr(penv, t) != nullptr)
     {
-        return false;
+      result = true;
+      break;
     }
-    bool result = false;
-    for (const auto& t : terms)
-    {
-        if (std::strstr(penv, t) != nullptr)
-        {
-            result = true;
-            break;
-        }
-    }
+  }
 
-    #elif defined(REDBUD_WIN)
-    static constexpr bool result = true;
-    #endif
-    return result;
+#elif defined(REDBUD_WIN)
+  static constexpr bool result = true;
+#endif
+  return result;
 }
 
 /// Determines whether the buffer stream reaches the end.
 inline bool is_terminal(const std::streambuf* buf)
 {
-    if (buf == get_coutbuf())
-    {
-        #if defined(REDBUD_LINUX) || defined(REDBUD_OSX)
-            return isatty(fileno(stdout)) ? true : false;
-        #elif defined(REDBUD_WIN)
-            return _isatty(_fileno(stdout)) ? true : false;
-        #endif
-    }
+  if (buf == get_coutbuf())
+  {
+#if defined(REDBUD_LINUX) || defined(REDBUD_OSX)
+    return isatty(fileno(stdout)) ? true : false;
+#elif defined(REDBUD_WIN)
+    return _isatty(_fileno(stdout)) ? true : false;
+#endif
+  }
 
-    if (buf == get_cerrbuf() || buf == get_clogbuf())
-    {
-        #if defined(REDBUD_LINUX) || defined(REDBUD_OSX)
-            return isatty(fileno(stderr)) ? true : false;
-        #elif defined(REDBUD_WIN)
-            return _isatty(_fileno(stderr)) ? true : false;
-        #endif
-    }
-    return false;
+  if (buf == get_cerrbuf() || buf == get_clogbuf())
+  {
+#if defined(REDBUD_LINUX) || defined(REDBUD_OSX)
+    return isatty(fileno(stderr)) ? true : false;
+#elif defined(REDBUD_WIN)
+    return _isatty(_fileno(stderr)) ? true : false;
+#endif
+  }
+  return false;
 }
 
 // For overloading standard output stream.
@@ -221,7 +221,7 @@ using state_return_t = typename std::enable_if<
 template <typename T>
 inline color_return_t<T> set_color(std::ostream& os, const T& value)
 {
-    return os << "\033[" << static_cast<int>(value) << "m";
+  return os << "\033[" << static_cast<int>(value) << "m";
 }
 
 #elif defined(REDBUD_WIN)
@@ -233,45 +233,45 @@ static constexpr WORD default_state = (FOREGROUND_BLUE |
 // Gets the corresponding RGB value on Windows.
 inline WORD get_rgb(WORD rgb)
 {
-    static constexpr WORD cor[8] = { 0, 4, 2, 6, 1, 5, 3, 7 };
-    return cor[rgb];
+  static constexpr WORD cor[8] = { 0, 4, 2, 6, 1, 5, 3, 7 };
+  return cor[rgb];
 }
 
 // Sets font attributes on Windows.
 inline void set_attributes(redbud::io::fg color, WORD& state)
 {
-    if (color == redbud::io::fg::reserve)
-    {
-        return;
-    }
-    state &= 0xFFF0;
-    if (color == redbud::io::fg::reset)
-    {
-        state |= default_state;
-        return;
-    }
-    state |= get_rgb(static_cast<WORD>(color) - 30);
+  if (color == redbud::io::fg::reserve)
+  {
+    return;
+  }
+  state &= 0xFFF0;
+  if (color == redbud::io::fg::reset)
+  {
+    state |= default_state;
+    return;
+  }
+  state |= get_rgb(static_cast<WORD>(color) - 30);
 }
 
 inline void set_attributes(redbud::io::bg color, WORD& state)
 {
-    if (color == redbud::io::bg::reserve)
-    {
-        return;
-    }
-    state &= 0xFF0F;
-    if (color == redbud::io::bg::reset)
-    {
-        return;
-    }
-    state |= get_rgb(static_cast<WORD>(color) - 40) << 4;
+  if (color == redbud::io::bg::reserve)
+  {
+    return;
+  }
+  state &= 0xFF0F;
+  if (color == redbud::io::bg::reset)
+  {
+    return;
+  }
+  state |= get_rgb(static_cast<WORD>(color) - 40) << 4;
 }
 
 inline void set_attributes(redbud::io::hfg color, WORD& state)
 {
-    state &= 0xFFF0;
-    state |= (static_cast<WORD>(0x8) | 
-                get_rgb(static_cast<WORD>(color) - 90));
+  state &= 0xFFF0;
+  state |= (static_cast<WORD>(0x8) | 
+            get_rgb(static_cast<WORD>(color) - 90));
 }
 
 inline void set_attributes(redbud::io::hbg color, WORD& state)
